@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: grpc-client
+server:
+  port: 9898
+
+grpc:
+  server:
+    port: 9091

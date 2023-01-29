@@ -1,0 +1,44 @@
+syntax = "proto3";
+/**
+ * 指定生成实体
+ */
+option java_multiple_files = true;
+/**
+ * 指定生成接口
+ */
+option java_generic_services = true;
+/**
+ * 声明包
+ */
+package com.example.test.stream.service;
+
+service TestGrpcStream {
+  /**
+   * 普通流
+   */
+  rpc test(Request) returns (Response);
+  /**
+   * 客户端流
+   */
+  rpc testStreamRequest(stream Request) returns (Response);
+  /**
+   * 服务端流
+   */
+  rpc testStreamResponse(Request) returns (stream Response);
+  /**
+   * 双向流
+   */
+  rpc testStream(stream Request) returns (stream Response);
+};
+
+message Request {
+  string request = 1;
+  int64 timestamp = 2;
+  repeated string a = 3;
+}
+
+message Response {
+  string response = 1;
+  int64 timestamp = 2;
+  repeated string b = 3;
+}
