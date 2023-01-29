@@ -9,6 +9,7 @@ import org.lognet.springboot.grpc.GRpcService;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <p>在开始处详细描述该类的作用</p>
@@ -35,18 +36,87 @@ public class TestStreamServer extends TestGrpcStreamGrpc.TestGrpcStreamImplBase 
         responseObserver.onCompleted();
     }
 
+    /**
+     * 客户端流
+     *
+     * @param responseObserver
+     * @return
+     */
     @Override
     public StreamObserver<Request> testStreamRequest(StreamObserver<Response> responseObserver) {
-        return super.testStreamRequest(responseObserver);
+        StreamObserver<Request> responseStreamObserver = new StreamObserver<Request>() {
+            @Override
+            public void onNext(Request request) {
+                log.info("client stream:{}", request);
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+                log.error(throwable.getMessage());
+            }
+
+            @Override
+            public void onCompleted() {
+                log.info("close");
+            }
+        };
+        responseStreamObserver.onNext(Request.newBuilder().setRequest("client stream").build());
+        return responseStreamObserver;
     }
 
+    /**
+     * 服务端流
+     *
+     * @param request
+     * @param responseObserver
+     */
     @Override
     public void testStreamResponse(Request request, StreamObserver<Response> responseObserver) {
-        super.testStreamResponse(request, responseObserver);
+        log.info("request：{}", request);
+        for (int i = 0; i < 10; i++) {
+            try {
+                TimeUnit.SECONDS.sleep(2);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            responseObserver.onNext(Response.newBuilder().setResponse("server stream:" + request + ":" + i).build());
+        }
+        responseObserver.onCompleted();
+
     }
 
+    /**
+     * 双端流
+     *
+     * @param responseObserver
+     * @return
+     */
     @Override
     public StreamObserver<Request> testStream(StreamObserver<Response> responseObserver) {
-        return super.testStream(responseObserver);
+        return new StreamObserver<Request>() {
+            @Override
+            public void onNext(Request request) {
+                for (int i = 0; i < 10; i++) {
+                    log.info(request.getRequest());
+                    try {
+                        TimeUnit.SECONDS.sleep(2);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    responseObserver.onNext(Response.newBuilder().setResponse("all stream").build());
+                }
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+                log.error(throwable.getMessage());
+            }
+
+            @Override
+            public void onCompleted() {
+                log.info("close");
+                responseObserver.onCompleted();
+            }
+        };
     }
 }
